@@ -2,3 +2,4 @@
 # Defaults
 kubernetes_version: 1.27.1-00
 kubernetes_user: akalaj
+kubernetes_join_script: /Users/akalaj/Documents/github/ansible-cncf-k8s/roles/ansible-cncf-k8s/kubeadm-join.sh

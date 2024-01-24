@@ -15,6 +15,7 @@
       - tree
       - net-tools
       - mlocate
+      - bash-completion
     state: present
     update_cache: true
   when:

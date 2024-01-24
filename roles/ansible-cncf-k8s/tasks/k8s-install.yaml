@@ -148,13 +148,22 @@
   become: true
   when: kubeadm_results is defined
 
-- name: Save kubeadm join command to local file
+- name: Check if kubeadm-join.sh already exists
+  delegate_to: localhost
+  ansible.builtin.stat:
+    path: "{{kubernetes_join_script}}"
+  register: kubeadm_join_script
+
+- name: Create kubeadm-join.sh
   delegate_to: localhost
   run_once: true
   ansible.builtin.copy:
-    content: "{{ kubeadm_results.stdout_lines[-2:] }}"
-    dest: /Users/akalaj/Documents/github/ansible-cncf-k8s/roles/ansible-cncf-k8s/kubeadm-join.sh
-  when: kubeadm_results is defined
+    content: "{{ kubeadm_results.stdout_lines[-2:] | join('\n') }}"
+    dest: "{{kubernetes_join_script}}"
+  when:
+    - kubeadm_results is defined
+    - not kubeadm_join_script.stat.exists
+
 
 - name: Setup Kube directory
   ansible.builtin.file:
