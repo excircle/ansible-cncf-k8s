@@ -1,0 +1,4 @@
+---
+# Defaults
+kubernetes_version: 1.27.1-00
+kubernetes_user: akalaj

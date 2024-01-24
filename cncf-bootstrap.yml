@@ -1,0 +1,6 @@
+---
+- name: Bootstrap a Kubernetes cluster
+  hosts: k8s
+  become: true
+  roles:
+    - ansible-cncf-k8s

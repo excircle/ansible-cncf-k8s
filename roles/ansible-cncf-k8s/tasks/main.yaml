@@ -1,0 +1,6 @@
+---
+- name: Include OS Family Relevant Tasks
+  ansible.builtin.include_tasks: "install/{{ ansible_os_family }}.yaml"
+  
+- name: Kubernetes Install
+  ansible.builtin.include_tasks: "k8s-install.yaml"
