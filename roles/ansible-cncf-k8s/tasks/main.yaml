@@ -1,6 +1,18 @@
 ---
-- name: Include OS Family Relevant Tasks
-  ansible.builtin.include_tasks: "install/{{ ansible_os_family }}.yaml"
-  
-- name: Kubernetes Install
-  ansible.builtin.include_tasks: "k8s-install.yaml"
+# - name: Include OS Family Relevant Tasks
+#   ansible.builtin.include_tasks: "install/{{ ansible_os_family }}.yaml"
+
+# - name: Kubernetes Base Install
+#   ansible.builtin.include_tasks: "k8s-base-install.yaml"
+
+# - name: Kubernetes Control Plane Bootstrap
+#   ansible.builtin.include_tasks: "k8s-master-install.yaml"
+#   when: "'kube_masters' in group_names"
+
+# - name: Kubernetes Workers Mini Bootstrap
+#   ansible.builtin.include_tasks: "k8s-mini-strap-install.yaml"
+#   when: "'kube_workers' in group_names"
+
+- name: Kubernetes Network Bootstrap
+  ansible.builtin.include_tasks: "k8s-network-plugin-install.yaml"
+  when: "'kube_masters' in group_names"

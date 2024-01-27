@@ -16,6 +16,8 @@
       - net-tools
       - mlocate
       - bash-completion
+      - python3-pip
+      - python3-yaml
     state: present
     update_cache: true
   when:

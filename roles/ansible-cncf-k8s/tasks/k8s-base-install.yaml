@@ -1,0 +1,128 @@
+---
+- name: Templating out Kubernetes sysctl file
+  ansible.builtin.template:
+    src: kubernetes.conf.j2
+    dest: /etc/sysctl.d/kubernetes.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Apply sysctl settings
+  ansible.builtin.command: sysctl --system
+  become: true
+
+- name: Setup keyring directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Check if the Docker GPG key exists
+  ansible.builtin.stat:
+    path: /tmp/docker.gpg
+  register: docker_gpg
+
+- name: Download Docker GPG key
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /tmp/docker.gpg
+    mode: '0644'
+  become: true
+  when: not docker_gpg.stat.exists
+
+- name: Check if the Docker GPG key exists in Keyrings
+  ansible.builtin.stat:
+    path: /etc/apt/keyrings/docker.gpg
+  register: docker_gpg_keyring
+
+- name: Add Docker GPG key to /etc/apt/keyrings
+  ansible.builtin.command: gpg --dearmor -o /etc/apt/keyrings/docker.gpg /tmp/docker.gpg
+  become: true
+  when: not docker_gpg_keyring.stat.exists
+
+- name: Templating out Docker lists file
+  ansible.builtin.template:
+    src: docker.list.j2
+    dest: /etc/apt/sources.list.d/docker.list
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Installing ContainerD
+  ansible.builtin.apt:
+    name:
+      - containerd.io
+    state: present
+    update_cache: true
+  when:
+    - ansible_os_family == 'Debian'
+
+- name: Template out containerd config file
+  ansible.builtin.template:
+    src: config.toml.j2
+    dest: /etc/containerd/config.toml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Restart containerd service
+  ansible.builtin.service:
+    name: containerd
+    state: restarted
+  become: true
+
+- name: Check if the Kubernetes GPG key exists
+  ansible.builtin.stat:
+    path: /tmp/google-cloud-key.gpg
+  register: kubernetes_gpg
+
+- name: Download Kubernetes GPG key
+  ansible.builtin.get_url:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    dest: /tmp/google-cloud-key.gpg
+    mode: '0644'
+  become: true
+  when: not kubernetes_gpg.stat.exists
+
+- name: Add Google Cloud GPG key
+  ansible.builtin.apt_key:
+    file: /tmp/google-cloud-key.gpg
+    keyring: /etc/apt/trusted.gpg.d/google-cloud-key.gpg
+    state: present
+
+- name: Templating out Kubernetes lists file
+  ansible.builtin.template:
+    src: kubernetes.list.j2
+    dest: /etc/apt/sources.list.d/kubernetes.list
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Install kubeadm, kubelet, and kubectl
+  ansible.builtin.apt:
+    name:
+      - kubeadm={{ kubernetes_version }}
+      - kubelet={{ kubernetes_version }}
+      - kubectl={{ kubernetes_version }}
+    state: present
+    update_cache: true
+
+- name: Append IP and hostname to /etc/hosts
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ hostvars[groups['kube_masters'][0]].ansible_default_ipv4.address }} k8scp"
+    state: present
+
+- name: Add kubectl configurations to .bashrc
+  ansible.builtin.lineinfile:
+    path: "/home/{{ kubernetes_user }}/.bashrc"
+    line: "{{ item }}"
+    create: no
+    state: present
+  loop:
+    - "source <(kubectl completion bash)"
+    - "alias k='/usr/bin/kubectl'"
+  become: true
+  become_user: "{{kubernetes_user}}"

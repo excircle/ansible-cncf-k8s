@@ -1,0 +1,35 @@
+---
+# Task to install helm
+- name: Install Helm
+  ansible.builtin.shell: |
+    curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+    chmod 700 get_helm.sh
+    ./get_helm.sh
+  become: true
+
+# Create namespace called tigera-operator
+- name: Create namespace called tigera-operator
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: tigera-operator
+    state: present
+    kubeconfig: "/home/{{ kubernetes_user }}/.kube/config"
+  become: true
+
+- name: Add Calico Helm Repository
+  kubernetes.core.helm_repository:
+    name: projectcalico
+    repo_url: https://docs.projectcalico.org/charts
+    state: present
+  become: true
+
+- name: Install Calico Helm Chart
+  kubernetes.core.helm:
+    name: calico
+    chart_ref: projectcalico/tigera-operator
+    kubeconfig: "/home/{{ kubernetes_user }}/.kube/config"
+    namespace: tigera-operator
+    chart_version: 3.27.0
+    state: present
+  become: true
