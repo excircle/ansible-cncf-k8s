@@ -124,5 +124,6 @@
   loop:
     - "source <(kubectl completion bash)"
     - "alias k='/usr/bin/kubectl'"
+    - "complete -o default -F __start_kubectl k"
   become: true
   become_user: "{{kubernetes_user}}"

@@ -1,0 +1,14 @@
+---
+- name: Label all workers under k8s_workers
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Node
+    name: "{{ hostvars[item].inventory_hostname }}"
+    resource_definition:
+      metadata:
+        labels:
+          node-role.kubernetes.io/worker: ''
+    state: present
+    kubeconfig: "/home/{{ kubernetes_user }}/.kube/config"
+  loop: "{{ groups['kube_workers_fqdn'] }}"
+  become: true

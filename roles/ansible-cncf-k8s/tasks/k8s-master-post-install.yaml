@@ -1,0 +1,13 @@
+---
+- name: Label all masters under k8s_masters
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Node
+    name: "{{ hostvars[item].inventory_hostname }}"
+    resource_definition:
+      metadata:
+        labels:
+          node-role.kubernetes.io/master: ''
+    state: present
+    kubeconfig: "/home/{{ kubernetes_user }}/.kube/config"
+  loop: "{{ groups['kube_masters_fqdn'] }}"
